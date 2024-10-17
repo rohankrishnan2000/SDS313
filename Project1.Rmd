@@ -1,0 +1,110 @@
+---
+title: "What Factors Influence Spotify Popularity? (Project 1)"
+output: 
+  html_document:
+    css: null
+---
+
+```{=html}
+<style>
+body {
+  font-family: "Times New Roman"
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman"
+}
+</style>
+```
+# **Introduction**
+![](top500.jpg) 
+(https://pelhamexaminer.com/37166/entertainment/rolling-stones-the-500-greatest-albums-of-all-time-the-good-the-bad-and-the-70s-part-1/)
+
+The data we are looking at comes from Rolling Stones list of the 500 greatest albums of all time. Chris Dalla Riva and Matthew Daniels collected more data about the albums such as peak billboard position, spotify popularity and year released. The outcome variable of interest that I will be investigating is **spotify popularity**, and the predictors I will be using are **year**, **peak billboard position**, and **2020 rank**. For context, spotify popularity is a metric that measures how popular an album is, factoring in various metrics like streams, shares, saves etc. It favors recent activity over historical, and is rated on a scale from 0 to 100, with 100 being more popular than 0. Read more about how spotify popularity works at this link: (https://www.artist.tools/features/spotify-popularity-index#:~:text=The)
+
+# **Outcome Variable**
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+albums <- read.csv("Project1_Albums.csv")
+library(ggplot2)
+library(dplyr)
+albums_ggplot <- ggplot(albums)
+albums_ggplot + geom_histogram(aes(x =spotify_popularity), fill = "blue")
+popularity_summary <- albums %>% summarize(mean_popularity = mean(spotify_popularity, na.rm = TRUE), 
+                     median_popularity = median(spotify_popularity, na.rm = TRUE),
+                     sd_popularity = sd(spotify_popularity, na.rm = TRUE))
+print(popularity_summary)
+
+```
+
+The mean spotify popularity is 57.78 and the mean popularity is 58, showing that a popularity around 58 is the center of the data, and that it is not heavily skewed by outliers. The standard deviation is 14.56.
+
+# **Bivariate Analysis**
+
+```{r bivariate 1, echo=FALSE, message=FALSE, warning=FALSE}
+
+#Subset of Top 50 albums
+top_ranked <- albums %>% filter(rank_2020 <= 50)
+top_ranked_ggplot <- ggplot(top_ranked)
+top_ranked_ggplot + geom_point(aes(x = rank_2020, y = spotify_popularity), col = "blue") + labs(title = "Spotify Popularity vs 2020 ranking (Top 50)", x = "2020 Rank", y = "Spotify Popularity") + theme(
+  plot.title = element_text( family = "Times New Roman", size = 16, face = "bold", hjust = 0.5),
+  axis.title.x = element_text(family = "Times New Roman", size = 12, face = "bold" ),
+  axis.title.y = element_text(family = "Times New Roman", size = 12, face = "bold" )
+)
+
+
+```
+
+From the subset of the top 50 albums, based on the graph of Spotify popularity vs 2020 rank it appears there is no correlation between 2020 rank and popularity, as the correlation is `r cor(top_ranked$rank_2020, top_ranked$spotify_popularity, use = "complete.obs")`.
+
+```{r bivariate 2, echo=FALSE, message=FALSE, warning=FALSE}
+#New variable of period, modern or classic
+albums <- albums %>% mutate(period = if_else(release_year >= 1995, "Modern", "Classic"))
+
+ggplot(albums, aes(x = peak_billboard_position, y = spotify_popularity, color = period)) +
+  geom_point() +
+  labs(title = "Spotify Popularity vs Peak Billboard Position by Period", x = "Peak Billboard", y = "Spotify Popularity") + theme(plot.title = element_text( family = "Times New Roman", size = 16, face = "bold", hjust = 0.5),
+  axis.title.x = element_text(family = "Times New Roman", size = 12, face = "bold" ),
+  axis.title.y = element_text(family = "Times New Roman", size = 12, face = "bold" )
+  )
+```
+
+Based on the graph of spotify popularity vs peak billboard position by year, it is apparent for both modern and classic albums that there is no correlation between the two variables, as the correlation for modern albums is `r cor(albums$peak_billboard_position[albums$period == "Modern"], albums$spotify_popularity[albums$period == "Modern"], use = "complete.obs")`, and the correlation for classic albums is `r cor(albums$peak_billboard_position[albums$period == "Classic"],  albums$spotify_popularity[albums$period == "Classic"], use = "complete.obs")`.
+
+```{r bivariate 3, echo=FALSE, message=FALSE, warning=FALSE}
+#Graph of popularity by genre
+ggplot(albums, aes(x = genre, y = spotify_popularity, fill = genre)) +
+  geom_boxplot() +
+  labs(title = "Spotify Popularity by Genre",
+       x = "Genre",
+       y = "Spotify Popularity") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+genre_summary <- albums %>%
+  group_by(genre) %>%
+  summarise(
+    mean_popularity = mean(spotify_popularity, na.rm = TRUE),
+    median_popularity = median(spotify_popularity, na.rm = TRUE),
+    sd_popularity = sd(spotify_popularity, na.rm = TRUE),
+    Q1 = quantile(spotify_popularity, 0.25, na.rm = TRUE),  # 1st quartile (25th percentile)
+    Q3 = quantile(spotify_popularity, 0.75, na.rm = TRUE),  # 3rd quartile (75th percentile)
+    count = n()  # Number of albums in each genre
+  )
+print(genre_summary)
+
+```
+
+As shown by the graphs and tables, most genres have a median popularity of around 55-65, with a SD of around 12-17. However, Latin has a higher median popularity than the rest of 75, while blues has a lower median than the rest with a score of 27.
+
+# **Choice elements**
+For my elements I used 2 or more in line codes for the first two bivariate analyses, 2 or more hyperlinks in the introduction and at the end in the sources, a subset of the top 50 ranked albums in the first bivariate analyses, a new variable of period of when the album was released in the second bivariate analysis, and changed the font of the entire report and graphs to Times New Roman, as well as bolded words in my intro paragraph. 
+
+# **Conclusion**
+Now, I will summarize the findings of my investigation, and put the results of the graphs and summary statistics into context. Starting with the outcome variable, the distribution of Spotify popularity is approximately normal, and the mean popualrity of 57.78 along with SD of 14.5 means that most albums have a populairty between 43.28 and 72.28. In context, the top 500 best albums of all time have a pretty average popualrity rating, suggesting off the bat that being critically aclaimed does not equal current day popularity. Next, looking at the graph of Spotify popularity vs 2020 ranking for the Top 50 albums, we see a low correlation of -0.32. My theory for this relationship was that the top 50 best albums of all time would have increasing popularity with a higher rank, because they are highly praised by critics, but the data does not show that correlation. Moving on to the relationship between Spotify popularity and Peak billboard position by period, there again is no strong relationship between the two variables. My goal in creating this graph was to see if how an album did on the billboard charts (meaning it was once popular) affects how popular it is today, and if that relationship was affected by when the album was released, since that might affect the albums current relevance. However, for both modern and classic albums, there is not a strong correlation, suggesting that year and bilboard position don't affect current popularity, at least by a significant amount. The correlation for classic albums is a little higher perhaps suggesting that billboard rank of a classic album is more important to its current popularity than modern albums, however, I cannot say if this difference is significant or not. Finally, I investigated Spotify popularity by genre, and saw that most genres are about the same in popularity, suggesting that the genres of the top 500 albums don't affect their current popularity. The only exception is that latin music has a higher current popularity, and blues has less popularity. For future research, I would want to see other data collected that more directly impacts spotify popularity of these top 500. Also, I think an analysis of if these results are significant would be interesting, because I find it hard to believe that how 'good' an album is doesn't affect its popularity. 
+
+
+**Sources:**
+
+(https://pudding.cool/2024/03/greatest-music/ )
+
+(https://www.reddit.com/r/Music/comments/zwml1e/in_2022_i_listened_to_all_500_albums_on_rolling/ )
